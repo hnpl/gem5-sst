@@ -23,7 +23,7 @@ private:
 
     //Output dbg;
     Output info;
-    uint64_t sim_cycles;
+    uint64_t gem5_sim_cycles;
     uint64_t clocks_processed;
 
     //std::vector<ExtMaster*> masters;

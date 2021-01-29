@@ -96,7 +96,7 @@ GEM5.addParams({
     "comp_debug" : debug("GEM5_DEBUG"),
     "gem5DebugFlags" : debug("M5_DEBUG"),
     "frequency" : clockRate,
-    "cmd" : "configs/example/se.py configs/learning_gem5/part1/two_level.py"
+    "cmd" : "configs/example/fs.py --num-cpus 4 --disk-image=vexpress64-openembedded_minimal-armv8_20130623-376.img --root-device=/dev/sda2 --kernel=vmlinux.aarch64.20140821 --dtb-filename=vexpress.aarch64.20140821.dtb --mem-size=256MB --machine-type=VExpress_EMM64 --cpu-type=timing --external-memory-system=sst"
     })
 
 bus = sst.Component("membus", "memHierarchy.Bus")
@@ -152,9 +152,9 @@ def buildCPU(m5, num):
     link.connect((dtlbCache, "low_network_0", buslat), (bus, "high_network_%u" % bus_port, buslat))
 
 buildCPU(GEM5, 0)
-#buildCPU(GEM5, 1)
-#buildCPU(GEM5, 2)
-#buildCPU(GEM5, 3)
+buildCPU(GEM5, 1)
+buildCPU(GEM5, 2)
+buildCPU(GEM5, 3)
 
 l2cache = sst.Component("l2cache", "memHierarchy.Cache")
 l2cache.addParams(baseCacheParams)

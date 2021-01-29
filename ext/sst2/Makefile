@@ -1,8 +1,8 @@
 SST_VERSION=SST-10.1.0
 GEM5_LIB=gem5_opt
 
-LDFLAGS=-shared -fno-common ${shell pkg-config ${SST_VERSION} --libs} -L../../build/X86
-CXXFLAGS=-std=c++17 -g -O2 -fPIC ${shell pkg-config ${SST_VERSION} --cflags} ${shell python3-config --includes} -I../../build/X86
+LDFLAGS=-shared -fno-common ${shell pkg-config ${SST_VERSION} --libs} -L../../build/X86/
+CXXFLAGS=-std=c++17 -g -O2 -fPIC ${shell pkg-config ${SST_VERSION} --cflags} ${shell python3-config --includes} -I../../build/X86/ -I../../ext/pybind11/include/ -v
 CPPFLAGS+=-MMD -MP
 SRC=$(wildcard *.cc)
 
