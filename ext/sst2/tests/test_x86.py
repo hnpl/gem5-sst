@@ -91,7 +91,6 @@ l2CacheParams = ({
     })
 
 
-"""
 GEM5 = sst.Component("system", "gem5.gem5")
 GEM5.addParams({
     "comp_debug" : debug("GEM5_DEBUG"),
@@ -99,6 +98,7 @@ GEM5.addParams({
     "frequency" : clockRate,
     "cmd" : "configs/example/se.py configs/learning_gem5/part1/two_level.py"
     })
+"""
 
 bus = sst.Component("membus", "memHierarchy.Bus")
 bus.addParams({

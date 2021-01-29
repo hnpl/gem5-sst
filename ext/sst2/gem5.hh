@@ -30,7 +30,7 @@ private:
     //std::vector<ExtSlave*> slaves;
 
     void splitCommandArgs(std::string &cmd, std::vector<char*> &args);
-    void initPython(int argc, char *argv[]);
+    void initPython(int argc, char **argv);
 
 public:
     gem5Component(ComponentId_t id, Params &params);
