@@ -34,6 +34,14 @@ SST::gem5::gem5Component::gem5Component(SST::ComponentId_t id, SST::Params &para
     // how many gem5 cycles will be simulated within an SST clock tick
     gem5_sim_cycles = clock->getFactor();
 
+    std::vector<char*> args;
+    
+    // Initialize m5 special signal handling.
+    initSignals();
+
+
+    //initPython(args.size(), &args[0]);
+
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
 
@@ -42,7 +50,7 @@ SST::gem5::gem5Component::gem5Component(SST::ComponentId_t id, SST::Params &para
 
 SST::gem5::gem5Component::~gem5Component()
 {
-    Py_Finalize();
+    //Py_Finalize();
 }
 
 void
@@ -76,7 +84,7 @@ SST::gem5::gem5Component::finish()
     for (auto requestor: requestors)
         requestor->setup();
     */
-    info.output("Complete.");
+    info.output("Complete. Clocks Processed: %" PRIu64"\n", clocks_processed);
 }
 
 bool
@@ -108,8 +116,10 @@ SST::gem5::gem5Component::splitCommandArgs(std::string &cmd, std::vector<char*> 
 }
 
 void
-SST::gem5::gem5Component::initPython(int argc, char *argv[])
+SST::gem5::gem5Component::initPython(int argc, char *_argv[])
 {
+    // should be similar to gem5's src/sim/main.cc
+
     const char * m5MainCommands[] = {
         "import m5",
         "m5.main()",
@@ -118,15 +128,37 @@ SST::gem5::gem5Component::initPython(int argc, char *argv[])
 
     PyObject *mainModule,*mainDict;
 
-    Py_SetProgramName(argv[0]); // optional but recommended
+#if PY_MAJOR_VERSION >= 3
+    std::unique_ptr<wchar_t[], decltype(&PyMem_RawFree)> program(
+        Py_DecodeLocale(_argv[0], NULL),
+        &PyMem_RawFree);
+    Py_SetProgramName(program.get());
+#else
+    Py_SetProgramName(_argv[0]);
+#endif
 
+    // Register native modules with Python's init system before
+    // initializing the interpreter.
+    registerNativeModules();
+
+    // initialize embedded Python interpreter
     Py_Initialize();
 
-    int ret = initM5Python();
-    if (ret != 0) {
-        dbg.fatal(CALL_INFO, -1, "Python failed to initialize. Code: %d\n",
-                  ret);
+#if PY_MAJOR_VERSION >= 3
+    typedef std::unique_ptr<wchar_t[], decltype(&PyMem_RawFree)> WArgUPtr;
+    std::vector<WArgUPtr> v_argv;
+    std::vector<wchar_t *> vp_argv;
+    v_argv.reserve(argc);
+    vp_argv.reserve(argc);
+    for (int i = 0; i < argc; i++) {
+        v_argv.emplace_back(Py_DecodeLocale(_argv[i], NULL), &PyMem_RawFree);
+        vp_argv.emplace_back(v_argv.back().get());
     }
+
+    wchar_t **argv = vp_argv.data();
+#else
+    char **argv = _argv;
+#endif
 
     PySys_SetArgv(argc, argv);
 
@@ -139,8 +171,6 @@ SST::gem5::gem5Component::initPython(int argc, char *argv[])
     PyObject *result;
     const char **command = m5MainCommands;
 
-    // evaluate each command in the m5MainCommands array (basically a
-    // bunch of python statements.
     while (*command) {
         result = PyRun_String(*command, Py_file_input, mainDict, mainDict);
         if (!result) {
@@ -151,4 +181,5 @@ SST::gem5::gem5Component::initPython(int argc, char *argv[])
 
         command++;
     }
+
 }
