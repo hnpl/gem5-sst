@@ -3,7 +3,7 @@ SST_VERSION=SST-10.1.0
 GEM5_LIB=gem5_opt
 
 LDFLAGS=-shared -fno-common ${shell pkg-config ${SST_VERSION} --libs} -L../../build/ARM
-CXXFLAGS=-std=c++0x -g -O2 -fPIC ${shell pkg-config ${SST_VERSION} --cflags} ${shell python-config --includes} -I../../build/ARM
+CXXFLAGS=-std=c++17 -g -O2 -fPIC ${shell pkg-config ${SST_VERSION} --cflags} ${shell python-config --includes} -I../../build/ARM
 CPPFLAGS+=-MMD -MP
 SRC=$(wildcard *.cc)
 
