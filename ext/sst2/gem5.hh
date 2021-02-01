@@ -21,7 +21,7 @@ class gem5Component : public SST::Component
 {
 private:
 
-    //Output dbg;
+    Output dbg;
     Output info;
     uint64_t gem5_sim_cycles;
     uint64_t clocks_processed;

@@ -22,6 +22,8 @@
 SST::gem5::gem5Component::gem5Component(SST::ComponentId_t id, SST::Params &params)
     : SST::Component(id)
 {
+    dbg.init("@t:gem5:@p():@l " + getName() + ": ", 0, 0,
+            (Output::output_location_t)params.find<int>("comp_debug", 0));
     info.init("gem5:" + getName() + ": ", 0, 0, SST::Output::STDOUT);
 
     SST::TimeConverter *clock = registerClock(
@@ -34,13 +36,29 @@ SST::gem5::gem5Component::gem5Component(SST::ComponentId_t id, SST::Params &para
     // how many gem5 cycles will be simulated within an SST clock tick
     gem5_sim_cycles = clock->getFactor();
 
+    // get the command line call to gem5
+    std::string cmd = params.find<std::string>("cmd", "");
+    if (cmd.empty()) {
+        dbg.fatal(CALL_INFO, -1, "Component %s must have a 'cmd' parameter.\n",
+            getName().c_str());
+    }
+
     std::vector<char*> args;
-    
+    args.push_back(const_cast<char*>("sst.x")); // "what is sst.x???"
+    info.output(CALL_INFO, "%s\n", cmd.c_str());
+    splitCommandArgs(cmd, args);
+    args.push_back(const_cast<char*>("--initialize-only"));
+    dbg.output(CALL_INFO, "Command string:  [sst.x %s --initialize-only]\n",
+               cmd.c_str());
+    for (size_t i = 0; i < args.size(); ++i) {
+        //dbg.output(CALL_INFO, "  Arg [%02zu] = %s\n", i, args[i]);
+        info.output(CALL_INFO, "  Arg [%02zu] = %s\n", i, args[i]);
+    }
+
     // Initialize m5 special signal handling.
     initSignals();
 
-
-    //initPython(args.size(), &args[0]);
+    initPython(args.size(), &args[0]);
 
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
@@ -50,7 +68,7 @@ SST::gem5::gem5Component::gem5Component(SST::ComponentId_t id, SST::Params &para
 
 SST::gem5::gem5Component::~gem5Component()
 {
-    //Py_Finalize();
+    Py_Finalize();
 }
 
 void
@@ -113,6 +131,53 @@ SST::gem5::gem5Component::clockTick(Cycle_t cycle)
 void
 SST::gem5::gem5Component::splitCommandArgs(std::string &cmd, std::vector<char*> &args)
 {
+    //const std::array<char, 4> delimiters = { {"\\", " ", "\'", "\""} };
+    const std::array<char, 4> delimiters = { {'\\', ' ', '\'', '\"'} };
+
+    std::vector<std::string> parsed_args1;
+    std::vector<std::string> parsed_args2;
+
+    auto prev = &(parsed_args1);
+    auto curr = &(parsed_args2);
+
+    curr->push_back(cmd);
+
+    for (auto delimiter: delimiters)
+    {
+        std::swap(prev, curr);
+        curr->clear();
+
+        for (auto part: *prev)
+        {
+            size_t left = 0;
+            size_t right = 0;
+            size_t part_length = part.size();
+
+            while (left < part_length)
+            {
+                while ((left < part_length) && (part[left] == delimiter))
+                    left++;
+                
+                if (!(left < part_length))
+                    break;
+
+                right = part.find(delimiter, left);
+                if (right == part.npos)
+                    right = part_length - 1;
+
+                if (left < right)
+                {
+                    info.output(CALL_INFO, "pushing[%i, %i]: %s\n", left, right, part.substr(left, right-left+1).c_str());
+                    curr->push_back(part.substr(left, right-left+1));
+                }
+                
+                left = right + 1;
+            }
+        }
+    }
+
+    for (auto part: *curr)
+        args.push_back(&part[0]);
 }
 
 void

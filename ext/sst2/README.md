@@ -16,6 +16,7 @@ echo "export LD_LIBRARY_PATH=absoblute/path/to/gem5/X86/build:$LD_LIBRARY_PATH" 
 ```
 
 ## Compile gem5/SST interface
+This step must be done after gem5 is compiled.
 ```sh
 make -C ext/sst2
 ```
