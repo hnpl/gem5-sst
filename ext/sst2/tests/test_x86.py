@@ -96,7 +96,7 @@ GEM5.addParams({
     "comp_debug" : debug("GEM5_DEBUG"),
     "gem5DebugFlags" : debug("M5_DEBUG"),
     "frequency" : clockRate,
-    "cmd" : "configs/example/se.py configs/learning_gem5/part1/two_level.py"
+    "cmd" : "build/X86/gem5.opt configs/learning_gem5/part1/two_level.py"
     })
 """
 

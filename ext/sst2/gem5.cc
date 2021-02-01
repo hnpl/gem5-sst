@@ -50,9 +50,11 @@ SST::gem5::gem5Component::gem5Component(SST::ComponentId_t id, SST::Params &para
     args.push_back(const_cast<char*>("--initialize-only"));
     dbg.output(CALL_INFO, "Command string:  [sst.x %s --initialize-only]\n",
                cmd.c_str());
+    info.output(CALL_INFO, "Command string:  [sst.x %s --initialize-only]\n",
+               cmd.c_str());
     for (size_t i = 0; i < args.size(); ++i) {
         //dbg.output(CALL_INFO, "  Arg [%02zu] = %s\n", i, args[i]);
-        info.output(CALL_INFO, "  Arg [%02zu] = %s\n", i, args[i]);
+        info.output(CALL_INFO, "  Arg [%02zu] = \"%s\"\n", i, args[i]);
     }
 
     // Initialize m5 special signal handling.
@@ -131,7 +133,6 @@ SST::gem5::gem5Component::clockTick(Cycle_t cycle)
 void
 SST::gem5::gem5Component::splitCommandArgs(std::string &cmd, std::vector<char*> &args)
 {
-    //const std::array<char, 4> delimiters = { {"\\", " ", "\'", "\""} };
     const std::array<char, 4> delimiters = { {'\\', ' ', '\'', '\"'} };
 
     std::vector<std::string> parsed_args1;
@@ -163,13 +164,10 @@ SST::gem5::gem5Component::splitCommandArgs(std::string &cmd, std::vector<char*> 
 
                 right = part.find(delimiter, left);
                 if (right == part.npos)
-                    right = part_length - 1;
+                    right = part_length;
 
-                if (left < right)
-                {
-                    info.output(CALL_INFO, "pushing[%i, %i]: %s\n", left, right, part.substr(left, right-left+1).c_str());
-                    curr->push_back(part.substr(left, right-left+1));
-                }
+                if (left <= right)
+                    curr->push_back(part.substr(left, right-left));
                 
                 left = right + 1;
             }
@@ -177,7 +175,7 @@ SST::gem5::gem5Component::splitCommandArgs(std::string &cmd, std::vector<char*> 
     }
 
     for (auto part: *curr)
-        args.push_back(&part[0]);
+        args.push_back(strdup(part.c_str()));
 }
 
 void
