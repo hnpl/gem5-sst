@@ -200,6 +200,26 @@ SST::gem5::gem5Component::initPython(int argc, char *_argv[])
     Py_SetProgramName(_argv[0]);
 #endif
 
+    int ret;
+    // Register native modules with Python's init system before
+    // initializing the interpreter.
+    registerNativeModules();
+
+    // initialize embedded Python interpreter
+    Py_Initialize();
+
+    // Initialize the embedded m5 python library
+    ret = EmbeddedPython::initAll();
+
+    if (ret == 0) {
+        // start m5
+        ret = m5Main(argc, _argv);
+    }
+    else {
+        info.output(CALL_INFO, "Not calling m5Main due to ret=%d\n", ret);
+    }
+
+/*
     // Register native modules with Python's init system before
     // initializing the interpreter.
     registerNativeModules();
@@ -224,12 +244,15 @@ SST::gem5::gem5Component::initPython(int argc, char *_argv[])
 #endif
 
     PySys_SetArgv(argc, argv);
+    //m5Main(argc, _argv);
 
     mainModule = PyImport_AddModule("__main__");
     assert(mainModule);
 
     mainDict = PyModule_GetDict(mainModule);
     assert(mainDict);
+
+    EmbeddedPyBind::initAll();
 
     PyObject *result;
     const char **command = m5MainCommands;
@@ -244,5 +267,6 @@ SST::gem5::gem5Component::initPython(int argc, char *_argv[])
 
         command++;
     }
+    */
 
 }

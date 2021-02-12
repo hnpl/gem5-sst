@@ -49,6 +49,7 @@
 #include <iostream>
 #include <list>
 #include <string>
+#include <sstream>
 #include <vector>
 
 #include "base/compiler.hh"
@@ -81,7 +82,10 @@ EmbeddedPython::EmbeddedPython(const char *filename, const char *abspath,
     // if we've added the importer keep track of it because we need it
     // to bootstrap.
     if (std::string(modpath) == std::string("importer"))
+    {
+        warn("EmbeddedPython() modpath=%s\n", modpath);
         importer = this;
+    }
     else
         getList().push_back(this);
 }
@@ -102,10 +106,21 @@ EmbeddedPython::getCode() const
 {
     Bytef marshalled[len];
     uLongf unzlen = len;
+    warn("EmbeddedPython::getCode() len=%d", len);
     int ret = uncompress(marshalled, &unzlen, (const Bytef *)code, zlen);
+    std::stringstream str;
+    for (size_t i = 0; i < len; i++)
+    {
+        str << marshalled[i];
+    }
+
+    warn("EmbeddedPython::getCode() ret=%d expected=%d", ret, Z_OK);
+    warn("EmbeddedPython::getCode() marshalled=%s", str.str());
     if (ret != Z_OK)
         panic("Could not uncompress code: %s\n", zError(ret));
     assert(unzlen == (uLongf)len);
+
+    warn("PYTHON VERSION %d", PY_MAJOR_VERSION);
 
     return PyMarshal_ReadObjectFromString((char *)marshalled, len);
 }
@@ -133,8 +148,12 @@ EmbeddedPython::initAll()
 {
     // Load the importer module
     PyObject *code = importer->getCode();
+    if ((code==NULL) || (code==nullptr)) {
+        warn("EmbeddedPython::initAll() code == NULL");
+    }
     importerModule = PyImport_ExecCodeModule(PyCC("importer"), code);
     if (!importerModule) {
+        warn("EmbeddedPython::initAll() failed at importerModule");
         PyErr_Print();
         return 1;
     }
@@ -143,9 +162,16 @@ EmbeddedPython::initAll()
     // python importer
     std::list<EmbeddedPython *>::iterator i = getList().begin();
     std::list<EmbeddedPython *>::iterator end = getList().end();
+    size_t count = 0;
     for (; i != end; ++i)
+    {
         if (!(*i)->addModule())
+        {
+            warn("EmbeddedPython::initAll() failed at addModule %d\n", count);
             return 1;
+        }
+        count++;
+    }
 
     return 0;
 }
