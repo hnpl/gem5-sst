@@ -23,7 +23,7 @@ This step must be done after gem5 is compiled.
 make -C ext/sst2
 ```
 
-## Download SST Elements
+## Download SST
 Download SST source code from here <http://sst-simulator.org/SSTPages/SSTMainDownloads/>.
 ```sh
 wget https://github.com/sstsimulator/sst-core/releases/download/v10.1.0_Final/sstcore-10.1.0.tar.gz
