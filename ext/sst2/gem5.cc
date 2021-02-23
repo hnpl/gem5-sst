@@ -57,9 +57,6 @@ SST::gem5::gem5Component::gem5Component(SST::ComponentId_t id, SST::Params &para
         info.output(CALL_INFO, "  Arg [%02zu] = \"%s\"\n", i, args[i]);
     }
 
-    // Initialize m5 special signal handling.
-    initSignals();
-
     initPython(args.size(), &args[0]);
 
     registerAsPrimaryComponent();
@@ -183,13 +180,12 @@ SST::gem5::gem5Component::initPython(int argc, char *_argv[])
 {
     // should be similar to gem5's src/sim/main.cc
 
-    const char * m5MainCommands[] = {
-        "import m5",
-        "m5.main()",
-        0 // sentinel is required
-    };
-
     PyObject *mainModule,*mainDict;
+
+    int ret;
+
+    // Initialize m5 special signal handling.
+    initSignals();
 
 #if PY_MAJOR_VERSION >= 3
     std::unique_ptr<wchar_t[], decltype(&PyMem_RawFree)> program(
@@ -200,16 +196,31 @@ SST::gem5::gem5Component::initPython(int argc, char *_argv[])
     Py_SetProgramName(_argv[0]);
 #endif
 
-    int ret;
     // Register native modules with Python's init system before
     // initializing the interpreter.
-    registerNativeModules();
+    if (!Py_IsInitialized()) {
+        registerNativeModules();
+        // initialize embedded Python interpreter
+        Py_Initialize();
+    }
+    else {
+        warn("Python environment has been initialized!\n");
+        // https://stackoverflow.com/questions/18107783/create-a-python3-module-at-runtime-while-initialize-an-embedded-python
+        PyImport_AddModule("_m5");
+        warn("Added _m5\n");
+        PyObject* module = EmbeddedPyBind::initAll();
+        PyObject* sys_modules = PyImport_GetModuleDict();
+        PyDict_SetItemString(sys_modules, "_m5", module);
+        Py_DECREF(module);
+    }
 
-    // initialize embedded Python interpreter
-    Py_Initialize();
 
     // Initialize the embedded m5 python library
     ret = EmbeddedPython::initAll();
+
+    
+    for (size_t i = 0; i < argc; i++)
+        printf("------------------- inputs: %s\n", _argv[i]);
 
     if (ret == 0) {
         // start m5
@@ -218,55 +229,5 @@ SST::gem5::gem5Component::initPython(int argc, char *_argv[])
     else {
         info.output(CALL_INFO, "Not calling m5Main due to ret=%d\n", ret);
     }
-
-/*
-    // Register native modules with Python's init system before
-    // initializing the interpreter.
-    registerNativeModules();
-
-    // initialize embedded Python interpreter
-    Py_Initialize();
-
-#if PY_MAJOR_VERSION >= 3
-    typedef std::unique_ptr<wchar_t[], decltype(&PyMem_RawFree)> WArgUPtr;
-    std::vector<WArgUPtr> v_argv;
-    std::vector<wchar_t *> vp_argv;
-    v_argv.reserve(argc);
-    vp_argv.reserve(argc);
-    for (int i = 0; i < argc; i++) {
-        v_argv.emplace_back(Py_DecodeLocale(_argv[i], NULL), &PyMem_RawFree);
-        vp_argv.emplace_back(v_argv.back().get());
-    }
-
-    wchar_t **argv = vp_argv.data();
-#else
-    char **argv = _argv;
-#endif
-
-    PySys_SetArgv(argc, argv);
-    //m5Main(argc, _argv);
-
-    mainModule = PyImport_AddModule("__main__");
-    assert(mainModule);
-
-    mainDict = PyModule_GetDict(mainModule);
-    assert(mainDict);
-
-    EmbeddedPyBind::initAll();
-
-    PyObject *result;
-    const char **command = m5MainCommands;
-
-    while (*command) {
-        result = PyRun_String(*command, Py_file_input, mainDict, mainDict);
-        if (!result) {
-            PyErr_Print();
-            break;
-        }
-        Py_DECREF(result);
-
-        command++;
-    }
-    */
 
 }

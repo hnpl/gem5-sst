@@ -29,8 +29,11 @@
 # scripts while allowing new SCons code to operate properly.
 
 try:
+
+    import os
     # Try to import a native module
     import _m5.core
+
 
     # Try to grab something from it in case demandimport is being used
     _m5.core.curTick

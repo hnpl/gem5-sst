@@ -292,6 +292,8 @@ pybind_init_core(py::module &m_native)
         .def("curTick", curTick)
         ;
 
+    warn("I'm hereeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
+
     /* TODO: These should be read-only */
     m_core.attr("compileDate") = py::cast(compileDate);
     m_core.attr("gem5Version") = py::cast(gem5Version);

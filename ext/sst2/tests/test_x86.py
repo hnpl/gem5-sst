@@ -96,7 +96,7 @@ GEM5.addParams({
     "comp_debug" : debug("GEM5_DEBUG"),
     "gem5DebugFlags" : debug("M5_DEBUG"),
     "frequency" : clockRate,
-    "cmd" : "configs/example/se.py  --caches --cpu-type=AtomicSimpleCPU -c ./tests/test-progs/hello/bin/x86/linux/hello"
+    "cmd" : "-re --outdir=m5out configs/example/se.py  --caches --cpu-type=AtomicSimpleCPU -c ./tests/test-progs/hello/bin/x86/linux/hello"
     })
 """
 

@@ -59,6 +59,7 @@ class CodeImporter(object):
             mod = imp.new_module(fullname)
             sys.modules[fullname] = mod
 
+
         try:
             mod.__loader__ = self
             srcfile,abspath,code = self.modules[fullname]
