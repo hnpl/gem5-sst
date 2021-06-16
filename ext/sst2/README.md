@@ -99,3 +99,13 @@ Testing the installation,
 ```sh
 sst $SST_ELEMENTS_ROOT/src/sst/elements/simpleElementExample/tests/test_simpleRNGComponent_mersenne.py
 ```
+
+Adding PKG_CONFIG_PATH to .bashrc,
+```
+export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$SST_CORE_HOME/lib/pkgconfig/
+```
+
+Adding sst to LD_LIBRARY_PATH in .bashrc,
+```
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SST_CORE_HOME
+```
